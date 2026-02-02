@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Imagem Studio By Nando</title>
-    <!-- Chosen Palette: Sapphire Blue -->
+    <!-- Chosen Palette: Sapphire Elegance -->
     <!-- Application Structure Plan: 
-         Layout de painel duplo otimizado para SPA. 
-         Esquerda: Controlos de entrada com alternância de modo (Criar/Editar).
-         Direita: Visualização de resultados.
-         Implementado interceptor de credenciais para evitar erros de autenticação em navegadores móveis.
+         A SPA foi desenhada com uma arquitetura de dois painéis paralelos. 
+         O painel de controlo à esquerda utiliza uma hierarquia vertical clara para facilitar o fluxo de trabalho: 
+         Modo -> Prompt -> Estilo/Ferramenta -> Ação. 
+         O painel de visualização à direita ocupa a maior parte do ecrã para dar destaque à arte gerada. 
+         Esta estrutura foi escolhida para proporcionar uma experiência de "estúdio profissional" num ambiente de página única.
+    -->
+    <!-- Visualization & Content Choices: 
+         - Entrada de Dados: Campo de texto dinâmico para descrições criativas.
+         - Seleção de Modo: Botões de alternância de estado (Criar/Editar) para diferentes objetivos de utilizador.
+         - Geração de Imagem: Motor Imagen 4.0 para alta fidelidade visual.
+         - Edição de Imagem: Motor Gemini 2.5 Flash para transformações multimodais.
+         - Feedback Visual: Spinner de carregamento em canvas para indicar processamento assíncrono.
+         - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. 
     -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -21,53 +30,69 @@
         }
 
         body {
-            background-color: #f1f5f9;
+            background-color: #f8fafc;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #1e293b;
         }
 
-        /* Título em Evidência Total (Branco Nítido) */
+        /* Título em Evidência Máxima - Branco Puro sobre Azul */
         .panel-title {
             background: linear-gradient(135deg, #1e6be6, var(--sapphire)) !important;
             color: var(--white) !important;
             -webkit-text-fill-color: var(--white) !important;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            text-align: center;
-            font-weight: 900;
-            box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
-            display: block;
+            padding: 1.5rem !important;
+            border-radius: 1.25rem !important;
+            text-align: center !important;
+            font-weight: 900 !important;
+            box-shadow: 0 12px 24px -6px rgba(15, 82, 186, 0.4) !important;
+            border: 2px solid rgba(255, 255, 255, 0.4) !important;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4) !important;
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .panel-subtitle {
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
 
         .generate-btn {
             background-color: var(--sapphire) !important;
             color: var(--white) !important;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 14px 0 rgba(15, 82, 186, 0.35);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(15, 82, 186, 0.3);
         }
 
         .generate-btn:hover:not(:disabled) {
             background-color: var(--sapphire-dark) !important;
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(15, 82, 186, 0.5);
+        }
+
+        .generate-btn:disabled {
+            background-color: #94a3b8 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
 
         .mode-btn {
-            transition: all 0.3s ease;
+            background: #ffffff;
             border: 1px solid #e2e8f0;
-            background: #f8fafc;
+            color: #64748b;
+            transition: all 0.3s ease;
         }
 
         .mode-btn.active {
             background-color: var(--sapphire) !important;
             color: white !important;
             border-color: var(--sapphire) !important;
+            box-shadow: 0 4px 10px rgba(15, 82, 186, 0.2);
         }
 
         .function-card {
-            border: 2px solid #e2e8f0;
+            border: 2px solid #f1f5f9;
             transition: all 0.2s ease;
-            cursor: pointer;
             background: white;
         }
 
@@ -79,8 +104,8 @@
 
         .upload-area {
             border: 2px dashed #cbd5e1;
+            background: #fdfdfd;
             transition: all 0.3s ease;
-            background: #f8fafc;
         }
 
         .upload-area:hover {
@@ -92,256 +117,260 @@
             border: 4px solid rgba(15, 82, 186, 0.1);
             border-top-color: var(--sapphire);
             border-radius: 50%;
-            width: 48px;
-            height: 48px;
+            width: 54px;
+            height: 54px;
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .image-preview-circle {
+        .image-preview-frame {
             width: 100%;
-            height: 200px;
+            height: 240px;
             object-fit: contain;
-            border-radius: 1rem;
+            border-radius: 1.5rem;
             background: #000;
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8 lg:p-12">
 
-    <div class="w-full max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
-        <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[700px]">
+    <main class="w-full max-w-7xl mx-auto bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[750px]">
             
-            <!-- Painel de Controlo (Esquerda) -->
-            <div class="lg:col-span-5 p-8 border-r border-slate-100 flex flex-col space-y-6">
-                <header>
-                    <h1 class="panel-title text-2xl">🪄 AI Imagem Studio By Nando</h1>
-                    <p class="text-slate-400 text-center mt-3 font-medium text-sm">Gerador profissional via Gemini Engine</p>
+            <!-- Painel de Controlos (Esquerda) -->
+            <div class="lg:col-span-5 p-8 lg:p-12 border-r border-slate-50 flex flex-col space-y-8 bg-white">
+                <header class="space-y-4">
+                    <h1 class="panel-title text-2xl lg:text-3xl">🪄 AI Imagem Studio By Nando</h1>
+                    <p class="panel-subtitle text-center text-xs uppercase">Engine Profissional Imagen 4.0</p>
                 </header>
 
                 <!-- Seletor de Modo -->
-                <div class="flex p-1 bg-slate-100 rounded-xl">
-                    <button id="btnCreateMode" class="mode-btn active flex-1 py-2 rounded-lg font-bold text-sm">CRIAR</button>
-                    <button id="btnEditMode" class="mode-btn flex-1 py-2 rounded-lg font-bold text-sm">EDITAR</button>
+                <div class="flex p-1.5 bg-slate-100 rounded-[1.25rem]">
+                    <button id="btnCreateMode" class="mode-btn active flex-1 py-3.5 rounded-xl font-black text-xs tracking-widest">CRIAR</button>
+                    <button id="btnEditMode" class="mode-btn flex-1 py-3.5 rounded-xl font-black text-xs tracking-widest">EDITAR</button>
                 </div>
 
-                <div class="space-y-6 flex-grow overflow-y-auto pr-2">
-                    <!-- Seção de Prompt -->
-                    <section class="space-y-3">
-                        <label class="text-slate-700 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
-                            <span>✍️ Descreva a sua ideia</span>
+                <div class="space-y-8 flex-grow overflow-y-auto pr-2">
+                    <!-- Prompt de Texto -->
+                    <section class="space-y-4">
+                        <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest flex items-center gap-2">
+                            <span>✍️ Descrição da sua Ideia</span>
                         </label>
-                        <textarea id="prompt" 
-                            class="w-full h-32 p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none shadow-sm" 
-                            placeholder="Ex: Um astronauta de armadura safira em Marte..."></textarea>
+                        <textarea id="promptInput" 
+                            class="w-full h-40 p-6 rounded-[1.5rem] border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none shadow-sm text-slate-700 leading-relaxed" 
+                            placeholder="Ex: Um gato futurista com armadura azul safira..."></textarea>
                     </section>
 
-                    <!-- Funções de Criar -->
-                    <div id="createFunctions" class="space-y-3">
-                        <label class="text-slate-700 font-bold text-sm uppercase tracking-wider">🎭 Estilo de Criação</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button class="function-card active p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="photo">
-                                <span class="text-2xl">📸</span>
-                                <span class="font-bold text-xs">FOTO</span>
+                    <!-- Funções Modo Criar -->
+                    <div id="createSection" class="space-y-4">
+                        <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest">🎭 Estilo Artístico</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button class="function-card active p-5 rounded-2xl text-center flex flex-col items-center gap-2" data-style="photo">
+                                <span class="text-3xl">📸</span>
+                                <span class="font-bold text-[10px] tracking-tighter uppercase">Fotografia</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="art">
-                                <span class="text-2xl">🎨</span>
-                                <span class="font-bold text-xs">ARTE</span>
+                            <button class="function-card p-5 rounded-2xl text-center flex flex-col items-center gap-2" data-style="digital art">
+                                <span class="text-3xl">🎨</span>
+                                <span class="font-bold text-[10px] tracking-tighter uppercase">Arte Digital</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="logo">
-                                <span class="text-2xl">🅰️</span>
-                                <span class="font-bold text-xs">LOGO</span>
+                            <button class="function-card p-5 rounded-2xl text-center flex flex-col items-center gap-2" data-style="logo">
+                                <span class="text-3xl">🅰️</span>
+                                <span class="font-bold text-[10px] tracking-tighter uppercase">Logótipo</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="comic">
-                                <span class="text-2xl">📚</span>
-                                <span class="font-bold text-xs">HQ</span>
+                            <button class="function-card p-5 rounded-2xl text-center flex flex-col items-center gap-2" data-style="comic">
+                                <span class="text-3xl">📚</span>
+                                <span class="font-bold text-[10px] tracking-tighter uppercase">Banda Desenhada</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Funções de Editar -->
-                    <div id="editFunctions" class="hidden space-y-3">
-                        <label class="text-slate-700 font-bold text-sm uppercase tracking-wider">🖌️ Ferramentas de Edição</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button class="function-card active p-4 rounded-xl text-center flex flex-col items-center gap-2" data-edit="retouch">
-                                <span class="text-2xl">🖌️</span>
-                                <span class="font-bold text-xs">RETOQUE</span>
+                    <!-- Funções Modo Editar -->
+                    <div id="editSection" class="hidden space-y-4">
+                        <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest">🖌️ Ferramentas IA</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button class="function-card active p-5 rounded-2xl text-center flex flex-col items-center gap-2" data-edit="retouch">
+                                <span class="text-3xl">🖌️</span>
+                                <span class="font-bold text-[10px] tracking-tighter uppercase">Retoque</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-edit="upscale">
-                                <span class="text-2xl">💎</span>
-                                <span class="font-bold text-xs">MELHORAR</span>
+                            <button class="function-card p-5 rounded-2xl text-center flex flex-col items-center gap-2" data-edit="upscale">
+                                <span class="text-3xl">💎</span>
+                                <span class="font-bold text-[10px] tracking-tighter uppercase">Melhorar</span>
                             </button>
                         </div>
                         
-                        <!-- Área de Upload -->
-                        <div class="space-y-3 pt-2">
-                            <label class="text-slate-700 font-bold text-sm uppercase tracking-wider">🖼️ Carregar Imagem</label>
-                            <div id="dropZone" class="upload-area p-6 rounded-2xl text-center cursor-pointer space-y-2">
-                                <div class="text-3xl">📤</div>
-                                <p class="text-xs text-slate-500 font-medium">Clique ou arraste a sua imagem aqui</p>
+                        <!-- Upload de Ficheiro -->
+                        <div class="pt-4 space-y-4">
+                            <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest">🖼️ Carregar Imagem</label>
+                            <div id="uploadZone" class="upload-area p-8 rounded-[1.5rem] text-center cursor-pointer space-y-3">
+                                <div class="text-4xl">📤</div>
+                                <p class="text-xs text-slate-500 font-bold uppercase tracking-tight">Clique ou arraste aqui</p>
                                 <input type="file" id="fileInput" class="hidden" accept="image/*">
                             </div>
-                            <div id="previewContainer" class="hidden">
-                                <img id="uploadPreview" class="image-preview-circle border border-slate-200" src="" alt="Preview">
-                                <button id="removeUpload" class="text-xs text-red-500 font-bold mt-2 w-full text-center hover:underline">Remover Imagem</button>
+                            <div id="previewBox" class="hidden relative group">
+                                <img id="uploadImg" class="image-preview-frame shadow-xl border-4 border-slate-50" src="" alt="Preview">
+                                <button id="cancelUpload" class="absolute top-4 right-4 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg font-black text-xl flex items-center justify-center hover:bg-red-600">×</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button id="generateBtn" class="generate-btn w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 mt-4">
+                <button id="generateBtn" class="generate-btn w-full py-6 rounded-[1.5rem] font-black text-xl flex items-center justify-center gap-4 mt-4">
                     <span id="btnText">🚀 GERAR IMAGEM</span>
                 </button>
             </div>
 
             <!-- Painel de Visualização (Direita) -->
-            <div class="lg:col-span-7 bg-slate-50 p-8 flex flex-col items-center justify-center relative">
+            <div class="lg:col-span-7 bg-slate-50 p-8 lg:p-16 flex flex-col items-center justify-center relative">
                 
-                <!-- Estado Inicial -->
-                <div id="placeholder" class="text-center space-y-4">
-                    <div class="text-6xl grayscale opacity-30">🖼️</div>
-                    <p class="text-slate-400 font-medium">O resultado aparecerá aqui</p>
-                </div>
-
-                <!-- Estado de Carregamento -->
-                <div id="loader" class="hidden flex flex-col items-center gap-4">
-                    <div class="loading-spinner"></div>
-                    <p class="text-blue-600 font-bold animate-pulse uppercase tracking-widest text-sm">Processando...</p>
-                </div>
-
-                <!-- Estado de Resultado -->
-                <div id="resultArea" class="hidden w-full flex flex-col items-center space-y-6">
-                    <div class="bg-white p-2 rounded-2xl shadow-2xl border border-white max-w-full overflow-hidden">
-                        <img id="outputImage" class="rounded-xl w-full h-auto max-h-[550px] object-contain" alt="Resultado">
+                <!-- Estado: Vazio -->
+                <div id="emptyView" class="text-center space-y-6 max-w-sm">
+                    <div class="w-44 h-44 bg-white rounded-full mx-auto flex items-center justify-center text-7xl shadow-inner border border-slate-100">🖼️</div>
+                    <div class="space-y-3">
+                        <p class="text-slate-700 font-black text-2xl">O seu Estúdio Digital</p>
+                        <p class="text-slate-400 font-medium leading-relaxed">Combine palavras e tecnologia para criar artes únicas em segundos. O resultado aparecerá aqui.</p>
                     </div>
-                    <div class="flex gap-4">
-                        <button id="downloadBtn" class="px-8 py-3 bg-slate-800 text-white rounded-full font-bold hover:bg-black transition-colors flex items-center gap-2">
-                            <span>💾 Guardar</span>
+                </div>
+
+                <!-- Estado: Carregamento -->
+                <div id="loadingView" class="hidden flex flex-col items-center gap-8">
+                    <div class="loading-spinner"></div>
+                    <p class="text-blue-600 font-black animate-pulse uppercase tracking-[0.2em] text-sm">Construindo Pixels...</p>
+                </div>
+
+                <!-- Estado: Resultado -->
+                <div id="resultView" class="hidden w-full flex flex-col items-center space-y-10 animate-in fade-in zoom-in duration-700">
+                    <div class="bg-white p-4 rounded-[3rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.15)] border-4 border-white max-w-full">
+                        <img id="finalImg" class="rounded-[2.2rem] w-full h-auto max-h-[600px] object-contain shadow-inner" alt="Resultado">
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <button id="saveBtn" class="px-12 py-5 bg-emerald-500 text-white rounded-2xl font-black hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl">
+                            <span>💾 GUARDAR</span>
                         </button>
-                        <button id="editResultBtn" class="px-8 py-3 bg-blue-100 text-blue-700 rounded-full font-bold hover:bg-blue-200 transition-colors">
-                            <span>✏️ Editar Esta</span>
+                        <button id="quickEditBtn" class="px-12 py-5 bg-blue-100 text-blue-700 rounded-2xl font-black hover:bg-blue-200 transition-all shadow-md">
+                            <span>✏️ EDITAR</span>
                         </button>
                     </div>
                 </div>
             </div>
 
         </div>
-    </div>
+    </main>
 
     <script>
-        // CONFIGURAÇÃO DA CHAVE - POSIÇÃO CORRETA
-        const apiKey = "AIzaSyD4mfBzv5R7C5VubiKfgK1cwaHKJVfFLHY"; 
+        // CHAVE DE API ATUALIZADA
+        const apiKey = "AIzaSyBK0mi5fxTQueEmDY1UpPTz4MqwgEO4gwY"; 
 
-        let currentMode = "create";
-        let selectedType = "photo";
-        let selectedEdit = "retouch";
-        let uploadedFileBase64 = null;
+        let mode = "create";
+        let style = "photo";
+        let edit = "retouch";
+        let uploadB64 = null;
 
-        // Alternância de Modos
+        // --- Navegação de Modos ---
         const btnCreate = document.getElementById('btnCreateMode');
         const btnEdit = document.getElementById('btnEditMode');
-        const createSection = document.getElementById('createFunctions');
-        const editSection = document.getElementById('editFunctions');
+        const createSec = document.getElementById('createSection');
+        const editSec = document.getElementById('editSection');
 
         btnCreate.onclick = () => {
-            currentMode = "create";
+            mode = "create";
             btnCreate.classList.add('active');
             btnEdit.classList.remove('active');
-            createSection.classList.remove('hidden');
-            editSection.classList.add('hidden');
+            createSec.classList.remove('hidden');
+            editSec.classList.add('hidden');
             document.getElementById('btnText').innerText = "🚀 GERAR IMAGEM";
         };
 
         btnEdit.onclick = () => {
-            currentMode = "edit";
+            mode = "edit";
             btnEdit.classList.add('active');
             btnCreate.classList.remove('active');
-            createSection.classList.add('hidden');
-            editSection.classList.remove('hidden');
+            createSec.classList.add('hidden');
+            editSec.classList.remove('hidden');
             document.getElementById('btnText').innerText = "🪄 APLICAR EDIÇÃO";
         };
 
-        // Seleção de Funções
-        document.querySelectorAll('#createFunctions .function-card').forEach(card => {
+        // --- Seleção de Estilos/Ferramentas ---
+        document.querySelectorAll('#createSection .function-card').forEach(card => {
             card.onclick = () => {
-                document.querySelectorAll('#createFunctions .function-card').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('#createSection .function-card').forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
-                selectedType = card.dataset.type;
+                style = card.dataset.style;
             };
         });
 
-        document.querySelectorAll('#editFunctions .function-card').forEach(card => {
+        document.querySelectorAll('#editSection .function-card').forEach(card => {
             card.onclick = () => {
-                document.querySelectorAll('#editFunctions .function-card').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('#editSection .function-card').forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
-                selectedEdit = card.dataset.edit;
+                edit = card.dataset.edit;
             };
         });
 
-        // Lógica de Upload
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const previewContainer = document.getElementById('previewContainer');
-        const uploadPreview = document.getElementById('uploadPreview');
+        // --- Lógica de Upload ---
+        const zone = document.getElementById('uploadZone');
+        const input = document.getElementById('fileInput');
+        const pBox = document.getElementById('previewBox');
+        const pImg = document.getElementById('uploadImg');
 
-        dropZone.onclick = () => fileInput.click();
+        zone.onclick = () => input.click();
 
-        fileInput.onchange = (e) => {
+        input.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    uploadedFileBase64 = event.target.result;
-                    uploadPreview.src = uploadedFileBase64;
-                    previewContainer.classList.remove('hidden');
-                    dropZone.classList.add('hidden');
+                reader.onload = (ev) => {
+                    uploadB64 = ev.target.result;
+                    pImg.src = uploadB64;
+                    pBox.classList.remove('hidden');
+                    zone.classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
             }
         };
 
-        document.getElementById('removeUpload').onclick = () => {
-            uploadedFileBase64 = null;
-            previewContainer.classList.add('hidden');
-            dropZone.classList.remove('hidden');
-            fileInput.value = "";
+        document.getElementById('cancelUpload').onclick = (e) => {
+            e.stopPropagation();
+            uploadB64 = null;
+            pBox.classList.add('hidden');
+            zone.classList.remove('hidden');
+            input.value = "";
         };
 
-        // Lógica de Geração/Edição
-        const generateBtn = document.getElementById('generateBtn');
-        const promptInput = document.getElementById('prompt');
-        const placeholder = document.getElementById('placeholder');
-        const loader = document.getElementById('loader');
-        const resultArea = document.getElementById('resultArea');
-        const outputImage = document.getElementById('outputImage');
+        // --- Motor de Processamento ---
+        const genBtn = document.getElementById('generateBtn');
+        const btnTxt = document.getElementById('btnText');
+        const promptIn = document.getElementById('promptInput');
+        const eView = document.getElementById('emptyView');
+        const lView = document.getElementById('loadingView');
+        const rView = document.getElementById('resultView');
+        const fImg = document.getElementById('finalImg');
 
-        async function processRequest() {
-            const prompt = promptInput.value.trim();
+        async function handleAction() {
+            const prompt = promptIn.value.trim();
             
-            if (currentMode === "create" && !prompt) {
-                alert("Por favor, descreva a imagem primeiro!");
+            if (mode === "create" && !prompt) {
+                alert("Por favor, descreva a sua visão primeiro!");
                 return;
             }
 
-            if (currentMode === "edit" && !uploadedFileBase64) {
-                alert("Por favor, carregue uma imagem para editar primeiro!");
+            if (mode === "edit" && !uploadB64) {
+                alert("Por favor, carregue uma imagem para editar!");
                 return;
             }
 
-            // UI Feedback
-            generateBtn.disabled = true;
-            placeholder.classList.add('hidden');
-            resultArea.classList.add('hidden');
-            loader.classList.remove('hidden');
+            // Iniciar UI
+            genBtn.disabled = true;
+            btnTxt.innerText = "A PROCESSAR...";
+            eView.classList.add('hidden');
+            rView.classList.add('hidden');
+            lView.classList.remove('hidden');
 
             try {
                 let response;
 
-                if (currentMode === "create") {
-                    const finalPrompt = `Professional ${selectedType} of: ${prompt}. Cinematic lighting, 8k detail.`;
+                if (mode === "create") {
+                    const finalPrompt = `Professional ${style} of: ${prompt}. Cinematic lighting, ultra detailed masterpiece, 8k.`;
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
                     
                     response = await fetch(url, {
@@ -354,9 +383,9 @@
                         credentials: 'omit'
                     });
                 } else {
-                    const editPrompt = `Task: ${selectedEdit}. Instructions: ${prompt || 'Enhance details'}.`;
+                    const editPrompt = `Task: ${edit}. Instructions: ${prompt || 'Improve details'}. High quality result.`;
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-                    const base64Data = uploadedFileBase64.split(',')[1];
+                    const rawB64 = uploadB64.split(',')[1];
 
                     response = await fetch(url, {
                         method: 'POST',
@@ -365,7 +394,7 @@
                             contents: [{
                                 parts: [
                                     { text: editPrompt },
-                                    { inlineData: { mimeType: "image/png", data: base64Data } }
+                                    { inlineData: { mimeType: "image/png", data: rawB64 } }
                                 ]
                             }],
                             generationConfig: { responseModalities: ['IMAGE'] }
@@ -374,26 +403,26 @@
                     });
                 }
 
-                if (!response.ok) throw new Error("Falha na API. Verifique sua chave ou permissões no Google Cloud.");
+                if (!response.ok) throw new Error("Erro na API. Verifique a ligação ou a chave.");
 
                 const data = await response.json();
                 let b64 = "";
 
-                if (currentMode === "create") {
+                if (mode === "create") {
                     b64 = data.predictions?.[0]?.bytesBase64Encoded;
                 } else {
                     b64 = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
                 }
 
                 if (b64) {
-                    outputImage.src = `data:image/png;base64,${b64}`;
-                    loader.classList.add('hidden');
-                    resultArea.classList.remove('hidden');
+                    fImg.src = `data:image/png;base64,${b64}`;
+                    lView.classList.add('hidden');
+                    rView.classList.remove('hidden');
 
-                    document.getElementById('downloadBtn').onclick = () => {
+                    document.getElementById('saveBtn').onclick = () => {
                         const link = document.createElement('a');
-                        link.href = outputImage.src;
-                        link.download = `nando-art-${Date.now()}.png`;
+                        link.href = fImg.src;
+                        link.download = `nando-studio-${Date.now()}.png`;
                         link.click();
                     };
                 } else {
@@ -402,21 +431,22 @@
 
             } catch (err) {
                 console.error(err);
-                alert(err.message || "Erro ao processar. Verifique a sua ligação ou API Key.");
-                placeholder.classList.remove('hidden');
-                loader.classList.add('hidden');
+                alert("Falha no processamento. Tente novamente mais tarde.");
+                eView.classList.remove('hidden');
+                lView.classList.add('hidden');
             } finally {
-                generateBtn.disabled = false;
+                genBtn.disabled = false;
+                btnTxt.innerText = mode === "create" ? "🚀 GERAR IMAGEM" : "🪄 APLICAR EDIÇÃO";
             }
         }
 
-        generateBtn.onclick = processRequest;
+        genBtn.onclick = handleAction;
 
-        document.getElementById('editResultBtn').onclick = () => {
-            uploadedFileBase64 = outputImage.src;
-            uploadPreview.src = uploadedFileBase64;
-            previewContainer.classList.remove('hidden');
-            dropZone.classList.add('hidden');
+        document.getElementById('quickEditBtn').onclick = () => {
+            uploadB64 = fImg.src;
+            pImg.src = uploadB64;
+            pBox.classList.remove('hidden');
+            zone.classList.add('hidden');
             btnEdit.click();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
