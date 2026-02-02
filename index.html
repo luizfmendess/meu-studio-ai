@@ -4,21 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Imagem Studio By Nando</title>
-    <!-- Chosen Palette: Sapphire Blue -->
+    <!-- Chosen Palette: Sapphire Elegance (Azul Safira) -->
     <!-- Application Structure Plan: 
-         SPA de alto desempenho otimizada para o motor Imagen 4.0.
-         Estrutura de painéis colaterais:
-         - Esquerda: Controlos de entrada com foco em legibilidade e acessibilidade.
-         - Direita: Visualização de resultados em alta definição.
-         Correção de interface: Título forçado a branco puro para evitar o efeito "apagado".
+         A SPA foi restaurada para a arquitetura de painel duplo original.
+         - Esquerda: Painel de controlo vertical para seleção de modo, prompt e ferramentas.
+         - Direita: Área imersiva de visualização para a arte gerada.
+         Esta estrutura foca 100% na tarefa de criação, eliminando distrações e gráficos analíticos.
+    -->
+    <!-- Visualization & Content Choices: 
+         - Geração: Gemini 2.5 Flash Image Preview (Multimodal) para máxima compatibilidade.
+         - Título: Estilo Sapphire Imperial com texto branco puro forçado para alta legibilidade.
+         - Layout: Grid responsiva do Tailwind (12 colunas).
+         - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. 
     -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --sapphire: #0F52BA;
             --sapphire-dark: #083a85;
-            --sapphire-light: rgba(15, 82, 186, 0.15);
-            --white-pure: #FFFFFF;
+            --sapphire-light: rgba(15, 82, 186, 0.1);
+            --white-pure: #FFFFFF !important;
         }
 
         body {
@@ -28,30 +33,20 @@
             padding: 0;
         }
 
-        /* TÍTULO EM EVIDÊNCIA TOTAL - CORRIGINDO O EFEITO APAGADO */
+        /* TÍTULO EM EVIDÊNCIA TOTAL - BRANCO NÍTIDO */
         .panel-title {
             background: linear-gradient(135deg, #1e6be6, var(--sapphire)) !important;
             color: var(--white-pure) !important;
             -webkit-text-fill-color: var(--white-pure) !important;
             padding: 1.5rem !important;
-            border-radius: 1rem !important;
+            border-radius: 1.25rem !important;
             text-align: center !important;
             font-weight: 900 !important;
-            font-size: 24px !important;
-            box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.5) !important;
-            border: 2px solid rgba(255, 255, 255, 0.4) !important;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+            font-size: 1.75rem !important;
+            box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.4) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4) !important;
             display: block !important;
-            margin-bottom: 0.5rem !important;
-        }
-
-        .panel-subtitle {
-            color: #64748b !important;
-            text-align: center !important;
-            font-weight: 600 !important;
-            font-size: 0.85rem !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.05em !important;
         }
 
         .generate-btn {
@@ -104,12 +99,7 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .upload-area {
-            border: 2px dashed #cbd5e1;
-            background: #f8fafc;
-        }
-
-        .image-preview-box {
+        .image-preview-frame {
             width: 100%;
             height: 200px;
             object-fit: contain;
@@ -120,67 +110,71 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 md:p-10">
 
-    <div class="w-full max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200">
+    <div class="w-full max-w-6xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
         <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[700px]">
             
-            <!-- Painel de Controlos -->
-            <div class="lg:col-span-5 p-8 border-r border-slate-100 flex flex-col space-y-6">
+            <!-- PAINEL DE CONTROLO (ESQUERDA) -->
+            <div class="lg:col-span-5 p-8 lg:p-10 border-r border-slate-100 flex flex-col space-y-8">
                 <header>
                     <h1 class="panel-title">🪄 AI Imagem Studio By Nando</h1>
-                    <p class="panel-subtitle">Gerador Profissional Gemini Engine</p>
+                    <p class="text-slate-400 text-center mt-3 font-semibold text-sm tracking-wide uppercase">Engine Criativa Profissional</p>
                 </header>
 
-                <div class="flex p-1 bg-slate-100 rounded-xl">
-                    <button id="btnCreateMode" class="mode-btn active flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Criar</button>
-                    <button id="btnEditMode" class="mode-btn flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Editar</button>
+                <!-- Seletor de Modo -->
+                <div class="flex p-1.5 bg-slate-100 rounded-2xl">
+                    <button id="btnCreateMode" class="mode-btn active flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest">CRIAR</button>
+                    <button id="btnEditMode" class="mode-btn flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest">EDITAR</button>
                 </div>
 
                 <div class="space-y-6 flex-grow overflow-y-auto pr-2">
+                    <!-- Prompt -->
                     <section class="space-y-3">
                         <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest flex items-center gap-2">
                             <span>✍️ Descrição da Ideia</span>
                         </label>
                         <textarea id="prompt" 
-                            class="w-full h-36 p-5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none shadow-sm text-slate-700" 
-                            placeholder="Ex: Um gato ninja em cima de um prédio azul safira, luz néon..."></textarea>
+                            class="w-full h-36 p-5 rounded-3xl border border-slate-200 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none shadow-sm text-slate-700" 
+                            placeholder="Ex: Um astronauta de armadura safira a explorar Marte, estilo cinematográfico..."></textarea>
                     </section>
 
+                    <!-- Funções Modo Criar -->
                     <div id="createFunctions" class="space-y-4">
                         <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest">🎭 Estilo Artístico</label>
                         <div class="grid grid-cols-2 gap-3">
-                            <button class="function-card active p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="photo">
-                                <span class="text-3xl">📸</span><span class="font-bold text-xs">FOTO</span>
+                            <button class="function-card active p-4 rounded-2xl text-center flex flex-col items-center gap-2" data-type="ultra-realistic cinematic photo">
+                                <span class="text-3xl">📸</span><span class="font-bold text-[10px]">FOTO</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="art">
-                                <span class="text-3xl">🎨</span><span class="font-bold text-xs">ARTE</span>
+                            <button class="function-card p-4 rounded-2xl text-center flex flex-col items-center gap-2" data-type="detailed digital art illustration">
+                                <span class="text-3xl">🎨</span><span class="font-bold text-[10px]">ARTE</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="logo">
-                                <span class="text-3xl">🅰️</span><span class="font-bold text-xs">LOGO</span>
+                            <button class="function-card p-4 rounded-2xl text-center flex flex-col items-center gap-2" data-type="minimalist flat vector logo">
+                                <span class="text-3xl">🅰️</span><span class="font-bold text-[10px]">LOGO</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="comic">
-                                <span class="text-3xl">📚</span><span class="font-bold text-xs">HQ</span>
+                            <button class="function-card p-4 rounded-2xl text-center flex flex-col items-center gap-2" data-type="vibrant comic book HQ style">
+                                <span class="text-3xl">📚</span><span class="font-bold text-[10px]">HQ</span>
                             </button>
                         </div>
                     </div>
 
+                    <!-- Funções Modo Editar -->
                     <div id="editFunctions" class="hidden space-y-4">
                         <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest">🖌️ Ferramentas IA</label>
                         <div class="grid grid-cols-2 gap-3">
-                            <button class="function-card active p-4 rounded-xl text-center flex flex-col items-center gap-2" data-edit="retouch">
-                                <span class="text-3xl">🖌️</span><span class="font-bold text-xs">RETOQUE</span>
+                            <button class="function-card active p-4 rounded-2xl text-center flex flex-col items-center gap-2" data-edit="retouch and enhance details">
+                                <span class="text-3xl">🖌️</span><span class="font-bold text-[10px]">RETOQUE</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-edit="upscale">
-                                <span class="text-3xl">💎</span><span class="font-bold text-xs">MELHORAR</span>
+                            <button class="function-card p-4 rounded-2xl text-center flex flex-col items-center gap-2" data-edit="upscale to high resolution">
+                                <span class="text-3xl">💎</span><span class="font-bold text-[10px]">MELHORAR</span>
                             </button>
                         </div>
-                        <div id="dropZone" class="upload-area p-8 rounded-2xl text-center cursor-pointer">
-                            <span class="text-3xl">📤</span>
-                            <p class="text-xs font-bold text-slate-500 mt-2">CARREGAR IMAGEM</p>
+                        <div id="dropZone" class="border-2 border-dashed border-slate-200 p-8 rounded-3xl text-center cursor-pointer hover:bg-slate-50">
+                            <span class="text-4xl">📤</span>
+                            <p class="text-xs font-bold text-slate-500 mt-2 uppercase tracking-tight">Carregar Imagem</p>
                             <input type="file" id="fileInput" class="hidden" accept="image/*">
                         </div>
-                        <div id="previewContainer" class="hidden">
-                            <img id="uploadPreview" class="image-preview-box" src="">
-                            <button id="removeUpload" class="text-xs text-red-500 font-bold mt-2 w-full text-center">Remover Imagem</button>
+                        <div id="previewContainer" class="hidden relative">
+                            <img id="uploadPreview" class="image-preview-frame" src="">
+                            <button id="removeUpload" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full shadow-lg font-bold flex items-center justify-center hover:bg-red-600">×</button>
                         </div>
                     </div>
                 </div>
@@ -190,11 +184,11 @@
                 </button>
             </div>
 
-            <!-- Painel de Visualização -->
+            <!-- PAINEL DE VISUALIZAÇÃO (DIREITA) -->
             <div class="lg:col-span-7 bg-slate-50 p-8 flex flex-col items-center justify-center relative">
                 <div id="placeholder" class="text-center space-y-4 opacity-30">
                     <div class="text-7xl">🖼️</div>
-                    <p class="font-bold text-sm tracking-widest uppercase">Pronto para criar</p>
+                    <p class="font-bold text-sm tracking-widest uppercase">Aguardando comando</p>
                 </div>
 
                 <div id="loader" class="hidden flex flex-col items-center gap-6">
@@ -202,13 +196,13 @@
                     <p class="text-blue-600 font-black animate-pulse uppercase tracking-widest text-xs">Criando Pixels...</p>
                 </div>
 
-                <div id="resultArea" class="hidden w-full flex flex-col items-center space-y-8">
+                <div id="resultArea" class="hidden w-full flex flex-col items-center space-y-8 animate-in fade-in zoom-in duration-500">
                     <div class="bg-white p-3 rounded-[2.5rem] shadow-2xl border border-white max-w-full">
-                        <img id="outputImage" class="rounded-[1.8rem] w-full h-auto max-h-[550px]" alt="Resultado">
+                        <img id="outputImage" class="rounded-[1.8rem] w-full h-auto max-h-[550px] object-contain" alt="Resultado">
                     </div>
                     <div class="flex gap-4">
-                        <button id="downloadBtn" class="px-10 py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-lg">💾 GUARDAR</button>
-                        <button id="editThisBtn" class="px-10 py-4 bg-blue-100 text-blue-700 rounded-2xl font-black">✏️ EDITAR</button>
+                        <button id="downloadBtn" class="px-12 py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-lg hover:bg-emerald-600 transition-all">💾 GUARDAR</button>
+                        <button id="editResultBtn" class="px-12 py-4 bg-blue-100 text-blue-700 rounded-2xl font-black">✏️ EDITAR</button>
                     </div>
                 </div>
             </div>
@@ -217,121 +211,136 @@
     </div>
 
     <script>
-        // CHAVE DE API ATUALIZADA
+        // CHAVE DE API ATUALIZADA - LUIZ
         const apiKey = "AIzaSyAJS9FegQpTWHbRXSmBMwbaEyjROMW1AIM"; 
 
-        let mode = "create";
-        let style = "photo";
-        let editAction = "retouch";
-        let uploadB64 = null;
+        let currentMode = "create";
+        let selectedStyle = "ultra-realistic cinematic photo";
+        let selectedEdit = "retouch and enhance details";
+        let uploadedFileBase64 = null;
 
-        // Navegação de Modos
-        document.getElementById('btnCreateMode').onclick = () => {
-            mode = "create";
-            document.getElementById('btnCreateMode').classList.add('active');
-            document.getElementById('btnEditMode').classList.remove('active');
-            document.getElementById('createFunctions').classList.remove('hidden');
-            document.getElementById('editFunctions').classList.add('hidden');
+        // --- Alternância de Modos ---
+        const btnCreate = document.getElementById('btnCreateMode');
+        const btnEdit = document.getElementById('btnEditMode');
+        const createSection = document.getElementById('createFunctions');
+        const editSection = document.getElementById('editFunctions');
+
+        btnCreate.onclick = () => {
+            currentMode = "create";
+            btnCreate.classList.add('active');
+            btnEdit.classList.remove('active');
+            createSection.classList.remove('hidden');
+            editSection.classList.add('hidden');
             document.getElementById('btnText').innerText = "🚀 GERAR IMAGEM";
         };
 
-        document.getElementById('btnEditMode').onclick = () => {
-            mode = "edit";
-            document.getElementById('btnEditMode').classList.add('active');
-            document.getElementById('btnCreateMode').classList.remove('active');
-            document.getElementById('editFunctions').classList.remove('hidden');
-            document.getElementById('createFunctions').classList.add('hidden');
+        btnEdit.onclick = () => {
+            currentMode = "edit";
+            btnEdit.classList.add('active');
+            btnCreate.classList.remove('active');
+            createSection.classList.add('hidden');
+            editSection.classList.remove('hidden');
             document.getElementById('btnText').innerText = "🪄 APLICAR EDIÇÃO";
         };
 
-        // Seleção de Funções
+        // --- Seleção de Funções ---
         document.querySelectorAll('.function-card').forEach(card => {
             card.onclick = () => {
                 card.parentElement.querySelectorAll('.function-card').forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
-                if (mode === "create") style = card.dataset.type;
-                else editAction = card.dataset.edit;
+                if (currentMode === "create") selectedStyle = card.dataset.type;
+                else selectedEdit = card.dataset.edit;
             };
         });
 
-        // Upload
-        document.getElementById('dropZone').onclick = () => document.getElementById('fileInput').click();
-        document.getElementById('fileInput').onchange = (e) => {
+        // --- Lógica de Upload ---
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const uploadPreview = document.getElementById('uploadPreview');
+
+        dropZone.onclick = () => fileInput.click();
+
+        fileInput.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (ev) => {
-                    uploadB64 = ev.target.result;
-                    document.getElementById('uploadPreview').src = uploadB64;
-                    document.getElementById('previewContainer').classList.remove('hidden');
-                    document.getElementById('dropZone').classList.add('hidden');
+                    uploadedFileBase64 = ev.target.result;
+                    uploadPreview.src = uploadedFileBase64;
+                    previewContainer.classList.remove('hidden');
+                    dropZone.classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
             }
         };
 
         document.getElementById('removeUpload').onclick = () => {
-            uploadB64 = null;
-            document.getElementById('previewContainer').classList.add('hidden');
-            document.getElementById('dropZone').classList.remove('hidden');
+            uploadedFileBase64 = null;
+            previewContainer.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            fileInput.value = "";
         };
 
-        // Geração/Edição
-        const genBtn = document.getElementById('generateBtn');
+        // --- Motor de Processamento (Gemini 2.5 Flash Multimodal) ---
+        const generateBtn = document.getElementById('generateBtn');
 
-        async function process() {
+        async function processRequest() {
             const promptVal = document.getElementById('prompt').value.trim();
-            if (mode === "create" && !promptVal) return alert("Escreva uma descrição!");
-            if (mode === "edit" && !uploadB64) return alert("Carregue uma imagem!");
+            
+            if (currentMode === "create" && !promptVal) return alert("Por favor, descreva primeiro o que deseja criar.");
+            if (currentMode === "edit" && !uploadedFileBase64) return alert("Por favor, carregue uma imagem para editar.");
 
-            genBtn.disabled = true;
+            generateBtn.disabled = true;
             document.getElementById('placeholder').classList.add('hidden');
             document.getElementById('resultArea').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
 
             try {
-                let response;
-                if (mode === "create") {
-                    // UTILIZANDO IMAGEN 4.0 - O MODELO MAIS ESTÁVEL E ATUALIZADO
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
-                    response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            instances: [{ prompt: `Professional ${style} of: ${promptVal}. High quality, detailed.` }],
-                            parameters: { sampleCount: 1 }
-                        })
-                    });
+                // Endpoint v1beta para suporte a IMAGE modalities
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+                
+                let payload;
+                if (currentMode === "create") {
+                    payload = {
+                        contents: [{
+                            parts: [{ text: `Generate a high quality, professional ${selectedStyle} based on: ${promptVal}. Detailed masterpiece.` }]
+                        }],
+                        generationConfig: { responseModalities: ['IMAGE'] }
+                    };
                 } else {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-                    response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    { text: `Task: ${editAction}. Instructions: ${promptVal || 'Enhance details'}.` },
-                                    { inlineData: { mimeType: "image/png", data: uploadB64.split(',')[1] } }
-                                ]
-                            }],
-                            generationConfig: { responseModalities: ['IMAGE'] }
-                        })
-                    });
+                    payload = {
+                        contents: [{
+                            parts: [
+                                { text: `Perform task: ${selectedEdit}. Instructions: ${promptVal || 'Enhance visuals'}.` },
+                                { inlineData: { mimeType: "image/png", data: uploadedFileBase64.split(',')[1] } }
+                            ]
+                        }],
+                        generationConfig: { responseModalities: ['IMAGE'] }
+                    };
                 }
 
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    credentials: 'omit'
+                });
+
                 if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error?.message || "Erro na API");
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || "Falha na API");
                 }
 
                 const data = await response.json();
-                let b64 = mode === "create" ? data.predictions?.[0]?.bytesBase64Encoded : data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                const base64 = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
 
-                if (b64) {
+                if (base64) {
                     const output = document.getElementById('outputImage');
-                    output.src = `data:image/png;base64,${b64}`;
+                    output.src = `data:image/png;base64,${base64}`;
                     document.getElementById('loader').classList.add('hidden');
                     document.getElementById('resultArea').classList.remove('hidden');
+
                     document.getElementById('downloadBtn').onclick = () => {
                         const link = document.createElement('a');
                         link.href = output.src;
@@ -341,23 +350,25 @@
                 } else {
                     throw new Error("A IA não retornou imagem.");
                 }
+
             } catch (err) {
                 console.error(err);
                 alert("Erro: " + err.message + "\nVerifique se o seu domínio está autorizado no Google Cloud.");
                 document.getElementById('placeholder').classList.remove('hidden');
                 document.getElementById('loader').classList.add('hidden');
             } finally {
-                genBtn.disabled = false;
+                generateBtn.disabled = false;
             }
         }
 
-        genBtn.onclick = process;
-        document.getElementById('editThisBtn').onclick = () => {
-            uploadB64 = document.getElementById('outputImage').src;
-            document.getElementById('uploadPreview').src = uploadB64;
-            document.getElementById('previewContainer').classList.remove('hidden');
-            document.getElementById('dropZone').classList.add('hidden');
-            document.getElementById('btnEditMode').click();
+        generateBtn.onclick = processRequest;
+
+        document.getElementById('editResultBtn').onclick = () => {
+            uploadedFileBase64 = document.getElementById('outputImage').src;
+            uploadPreview.src = uploadedFileBase64;
+            previewContainer.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+            btnEdit.click();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
     </script>
