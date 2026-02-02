@@ -4,64 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Imagem Studio By Nando</title>
-    <!-- Chosen Palette: Sapphire Elegance -->
+    <!-- Chosen Palette: Sapphire Blue -->
     <!-- Application Structure Plan: 
-         SPA robusta com tratamento de erros avançado. 
-         A estrutura separa claramente a lógica de criação (Imagen 3.0) da lógica de edição (Gemini Flash).
-         Otimizado para evitar bloqueios de CORS em produção e fornecer feedback detalhado ao utilizador.
+         SPA de alto desempenho otimizada para o motor Imagen 4.0.
+         Estrutura de painéis colaterais:
+         - Esquerda: Controlos de entrada com foco em legibilidade e acessibilidade.
+         - Direita: Visualização de resultados em alta definição.
+         Correção de interface: Título forçado a branco puro para evitar o efeito "apagado".
     -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --sapphire: #0F52BA;
             --sapphire-dark: #083a85;
-            --sapphire-light: rgba(15, 82, 186, 0.1);
-            --white: #FFFFFF;
+            --sapphire-light: rgba(15, 82, 186, 0.15);
+            --white-pure: #FFFFFF;
         }
 
         body {
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            color: #1e293b;
+            margin: 0;
+            padding: 0;
         }
 
+        /* TÍTULO EM EVIDÊNCIA TOTAL - CORRIGINDO O EFEITO APAGADO */
         .panel-title {
             background: linear-gradient(135deg, #1e6be6, var(--sapphire)) !important;
-            color: var(--white) !important;
-            -webkit-text-fill-color: var(--white) !important;
+            color: var(--white-pure) !important;
+            -webkit-text-fill-color: var(--white-pure) !important;
             padding: 1.5rem !important;
-            border-radius: 1.25rem !important;
+            border-radius: 1rem !important;
             text-align: center !important;
             font-weight: 900 !important;
-            box-shadow: 0 12px 24px -6px rgba(15, 82, 186, 0.4) !important;
+            font-size: 24px !important;
+            box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.5) !important;
             border: 2px solid rgba(255, 255, 255, 0.4) !important;
-            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4) !important;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
             display: block !important;
-            width: 100% !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .panel-subtitle {
+            color: #64748b !important;
+            text-align: center !important;
+            font-weight: 600 !important;
+            font-size: 0.85rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
         }
 
         .generate-btn {
             background-color: var(--sapphire) !important;
-            color: var(--white) !important;
+            color: var(--white-pure) !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(15, 82, 186, 0.3);
+            box-shadow: 0 4px 14px 0 rgba(15, 82, 186, 0.35);
         }
 
         .generate-btn:hover:not(:disabled) {
             background-color: var(--sapphire-dark) !important;
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(15, 82, 186, 0.5);
-        }
-
-        .generate-btn:disabled {
-            background-color: #94a3b8 !important;
-            cursor: not-allowed;
-            opacity: 0.7;
+            box-shadow: 0 6px 20px rgba(15, 82, 186, 0.5);
         }
 
         .mode-btn {
-            background: #ffffff;
+            transition: all 0.3s ease;
             border: 1px solid #e2e8f0;
+            background: #f8fafc;
             color: #64748b;
         }
 
@@ -72,8 +81,9 @@
         }
 
         .function-card {
-            border: 2px solid #f1f5f9;
+            border: 2px solid #e2e8f0;
             transition: all 0.2s ease;
+            cursor: pointer;
             background: white;
         }
 
@@ -83,86 +93,94 @@
             color: var(--sapphire) !important;
         }
 
-        .upload-area {
-            border: 2px dashed #cbd5e1;
-            background: #fdfdfd;
-        }
-
         .loading-spinner {
             border: 4px solid rgba(15, 82, 186, 0.1);
             border-top-color: var(--sapphire);
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .preview-img {
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            background: #f8fafc;
+        }
+
+        .image-preview-box {
             width: 100%;
-            height: 220px;
+            height: 200px;
             object-fit: contain;
             border-radius: 1rem;
             background: #000;
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 md:p-8">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-10">
 
-    <main class="w-full max-w-7xl mx-auto bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="w-full max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200">
         <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[700px]">
             
             <!-- Painel de Controlos -->
-            <div class="lg:col-span-5 p-8 border-r border-slate-50 flex flex-col space-y-6">
+            <div class="lg:col-span-5 p-8 border-r border-slate-100 flex flex-col space-y-6">
                 <header>
-                    <h1 class="panel-title text-2xl">🪄 AI Imagem Studio By Nando</h1>
-                    <p class="text-slate-400 text-center mt-3 font-bold text-xs uppercase tracking-widest">Engine: Imagen 3.0 Stable</p>
+                    <h1 class="panel-title">🪄 AI Imagem Studio By Nando</h1>
+                    <p class="panel-subtitle">Gerador Profissional Gemini Engine</p>
                 </header>
 
                 <div class="flex p-1 bg-slate-100 rounded-xl">
-                    <button id="btnCreate" class="mode-btn active flex-1 py-3 rounded-lg font-black text-xs">CRIAR</button>
-                    <button id="btnEdit" class="mode-btn flex-1 py-3 rounded-lg font-black text-xs">EDITAR</button>
+                    <button id="btnCreateMode" class="mode-btn active flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Criar</button>
+                    <button id="btnEditMode" class="mode-btn flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Editar</button>
                 </div>
 
                 <div class="space-y-6 flex-grow overflow-y-auto pr-2">
                     <section class="space-y-3">
-                        <label class="text-slate-700 font-black text-xs uppercase tracking-widest">✍️ Descrição</label>
-                        <textarea id="prompt" class="w-full h-32 p-4 rounded-2xl border border-slate-200 outline-none focus:border-blue-500 transition-all resize-none shadow-sm" placeholder="Ex: Um astronauta de armadura safira..."></textarea>
+                        <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest flex items-center gap-2">
+                            <span>✍️ Descrição da Ideia</span>
+                        </label>
+                        <textarea id="prompt" 
+                            class="w-full h-36 p-5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none shadow-sm text-slate-700" 
+                            placeholder="Ex: Um gato ninja em cima de um prédio azul safira, luz néon..."></textarea>
                     </section>
 
-                    <div id="createTools" class="grid grid-cols-2 gap-3">
-                        <button class="function-card active p-4 rounded-xl flex flex-col items-center gap-2" data-style="cinematic photography">
-                            <span class="text-2xl">📸</span><span class="font-bold text-[10px]">FOTO</span>
-                        </button>
-                        <button class="function-card p-4 rounded-xl flex flex-col items-center gap-2" data-style="digital art">
-                            <span class="text-2xl">🎨</span><span class="font-bold text-[10px]">ARTE</span>
-                        </button>
-                        <button class="function-card p-4 rounded-xl flex flex-col items-center gap-2" data-style="minimalist logo">
-                            <span class="text-2xl">🅰️</span><span class="font-bold text-[10px]">LOGO</span>
-                        </button>
-                        <button class="function-card p-4 rounded-xl flex flex-col items-center gap-2" data-style="comic book">
-                            <span class="text-2xl">📚</span><span class="font-bold text-[10px]">HQ</span>
-                        </button>
+                    <div id="createFunctions" class="space-y-4">
+                        <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest">🎭 Estilo Artístico</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="function-card active p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="photo">
+                                <span class="text-3xl">📸</span><span class="font-bold text-xs">FOTO</span>
+                            </button>
+                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="art">
+                                <span class="text-3xl">🎨</span><span class="font-bold text-xs">ARTE</span>
+                            </button>
+                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="logo">
+                                <span class="text-3xl">🅰️</span><span class="font-bold text-xs">LOGO</span>
+                            </button>
+                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-type="comic">
+                                <span class="text-3xl">📚</span><span class="font-bold text-xs">HQ</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <div id="editTools" class="hidden space-y-4">
+                    <div id="editFunctions" class="hidden space-y-4">
+                        <label class="text-slate-700 font-extrabold text-xs uppercase tracking-widest">🖌️ Ferramentas IA</label>
                         <div class="grid grid-cols-2 gap-3">
-                            <button class="function-card active p-4 rounded-xl flex flex-col items-center gap-2" data-edit="upscale">
-                                <span class="text-2xl">💎</span><span class="font-bold text-[10px]">MELHORAR</span>
+                            <button class="function-card active p-4 rounded-xl text-center flex flex-col items-center gap-2" data-edit="retouch">
+                                <span class="text-3xl">🖌️</span><span class="font-bold text-xs">RETOQUE</span>
                             </button>
-                            <button class="function-card p-4 rounded-xl flex flex-col items-center gap-2" data-edit="retouch">
-                                <span class="text-2xl">🖌️</span><span class="font-bold text-[10px]">RETOQUE</span>
+                            <button class="function-card p-4 rounded-xl text-center flex flex-col items-center gap-2" data-edit="upscale">
+                                <span class="text-3xl">💎</span><span class="font-bold text-xs">MELHORAR</span>
                             </button>
                         </div>
-                        <div id="uploadZone" class="upload-area p-8 rounded-2xl text-center cursor-pointer">
-                            <span class="text-3xl block mb-2">📤</span>
-                            <p class="text-xs font-bold text-slate-500">UPLOAD DE IMAGEM</p>
+                        <div id="dropZone" class="upload-area p-8 rounded-2xl text-center cursor-pointer">
+                            <span class="text-3xl">📤</span>
+                            <p class="text-xs font-bold text-slate-500 mt-2">CARREGAR IMAGEM</p>
                             <input type="file" id="fileInput" class="hidden" accept="image/*">
                         </div>
-                        <div id="previewBox" class="hidden relative">
-                            <img id="uploadImg" class="preview-img" src="">
-                            <button id="clearUpload" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full">×</button>
+                        <div id="previewContainer" class="hidden">
+                            <img id="uploadPreview" class="image-preview-box" src="">
+                            <button id="removeUpload" class="text-xs text-red-500 font-bold mt-2 w-full text-center">Remover Imagem</button>
                         </div>
                     </div>
                 </div>
@@ -174,140 +192,149 @@
 
             <!-- Painel de Visualização -->
             <div class="lg:col-span-7 bg-slate-50 p-8 flex flex-col items-center justify-center relative">
-                <div id="placeholder" class="text-center space-y-4 opacity-40">
+                <div id="placeholder" class="text-center space-y-4 opacity-30">
                     <div class="text-7xl">🖼️</div>
-                    <p class="font-bold uppercase tracking-widest text-sm">Aguardando comando...</p>
+                    <p class="font-bold text-sm tracking-widest uppercase">Pronto para criar</p>
                 </div>
 
                 <div id="loader" class="hidden flex flex-col items-center gap-6">
                     <div class="loading-spinner"></div>
-                    <p class="text-blue-600 font-black animate-pulse tracking-[0.3em] text-xs">PROCESSANDO</p>
+                    <p class="text-blue-600 font-black animate-pulse uppercase tracking-widest text-xs">Criando Pixels...</p>
                 </div>
 
-                <div id="result" class="hidden w-full flex flex-col items-center space-y-8">
+                <div id="resultArea" class="hidden w-full flex flex-col items-center space-y-8">
                     <div class="bg-white p-3 rounded-[2.5rem] shadow-2xl border border-white max-w-full">
-                        <img id="outputImg" class="rounded-[1.8rem] w-full h-auto max-h-[550px]" alt="Resultado">
+                        <img id="outputImage" class="rounded-[1.8rem] w-full h-auto max-h-[550px]" alt="Resultado">
                     </div>
-                    <button id="downloadBtn" class="px-12 py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-lg">💾 GUARDAR</button>
+                    <div class="flex gap-4">
+                        <button id="downloadBtn" class="px-10 py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-lg">💾 GUARDAR</button>
+                        <button id="editThisBtn" class="px-10 py-4 bg-blue-100 text-blue-700 rounded-2xl font-black">✏️ EDITAR</button>
+                    </div>
                 </div>
             </div>
 
         </div>
-    </main>
+    </div>
 
     <script>
+        // CHAVE DE API ATUALIZADA
         const apiKey = "AIzaSyBK0mi5fxTQueEmDY1UpPTz4MqwgEO4gwY"; 
+
         let mode = "create";
-        let style = "cinematic photography";
+        let style = "photo";
+        let editAction = "retouch";
         let uploadB64 = null;
 
-        // --- Navegação ---
-        document.getElementById('btnCreate').onclick = () => {
+        // Navegação de Modos
+        document.getElementById('btnCreateMode').onclick = () => {
             mode = "create";
-            document.getElementById('btnCreate').classList.add('active');
-            document.getElementById('btnEdit').classList.remove('active');
-            document.getElementById('createTools').classList.remove('hidden');
-            document.getElementById('editTools').classList.add('hidden');
+            document.getElementById('btnCreateMode').classList.add('active');
+            document.getElementById('btnEditMode').classList.remove('active');
+            document.getElementById('createFunctions').classList.remove('hidden');
+            document.getElementById('editFunctions').classList.add('hidden');
             document.getElementById('btnText').innerText = "🚀 GERAR IMAGEM";
         };
 
-        document.getElementById('btnEdit').onclick = () => {
+        document.getElementById('btnEditMode').onclick = () => {
             mode = "edit";
-            document.getElementById('btnEdit').classList.add('active');
-            document.getElementById('btnCreate').classList.remove('active');
-            document.getElementById('editTools').classList.remove('hidden');
-            document.getElementById('createTools').classList.add('hidden');
+            document.getElementById('btnEditMode').classList.add('active');
+            document.getElementById('btnCreateMode').classList.remove('active');
+            document.getElementById('editFunctions').classList.remove('hidden');
+            document.getElementById('createFunctions').classList.add('hidden');
             document.getElementById('btnText').innerText = "🪄 APLICAR EDIÇÃO";
         };
 
-        // --- Estilos ---
+        // Seleção de Funções
         document.querySelectorAll('.function-card').forEach(card => {
             card.onclick = () => {
                 card.parentElement.querySelectorAll('.function-card').forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
-                style = card.dataset.style || card.dataset.edit;
+                if (mode === "create") style = card.dataset.type;
+                else editAction = card.dataset.edit;
             };
         });
 
-        // --- Upload ---
-        document.getElementById('uploadZone').onclick = () => document.getElementById('fileInput').click();
+        // Upload
+        document.getElementById('dropZone').onclick = () => document.getElementById('fileInput').click();
         document.getElementById('fileInput').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     uploadB64 = ev.target.result;
-                    document.getElementById('uploadImg').src = uploadB64;
-                    document.getElementById('previewBox').classList.remove('hidden');
-                    document.getElementById('uploadZone').classList.add('hidden');
+                    document.getElementById('uploadPreview').src = uploadB64;
+                    document.getElementById('previewContainer').classList.remove('hidden');
+                    document.getElementById('dropZone').classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
             }
         };
-        document.getElementById('clearUpload').onclick = () => {
+
+        document.getElementById('removeUpload').onclick = () => {
             uploadB64 = null;
-            document.getElementById('previewBox').classList.add('hidden');
-            document.getElementById('uploadZone').classList.remove('hidden');
+            document.getElementById('previewContainer').classList.add('hidden');
+            document.getElementById('dropZone').classList.remove('hidden');
         };
 
-        // --- Geração ---
-        document.getElementById('generateBtn').onclick = async () => {
-            const promptValue = document.getElementById('prompt').value.trim();
-            if (mode === "create" && !promptValue) return alert("Escreva uma descrição!");
+        // Geração/Edição
+        const genBtn = document.getElementById('generateBtn');
+
+        async function process() {
+            const promptVal = document.getElementById('prompt').value.trim();
+            if (mode === "create" && !promptVal) return alert("Escreva uma descrição!");
             if (mode === "edit" && !uploadB64) return alert("Carregue uma imagem!");
 
-            const btn = document.getElementById('generateBtn');
-            btn.disabled = true;
+            genBtn.disabled = true;
             document.getElementById('placeholder').classList.add('hidden');
-            document.getElementById('result').classList.add('hidden');
+            document.getElementById('resultArea').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
 
             try {
                 let response;
                 if (mode === "create") {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
+                    // UTILIZANDO IMAGEN 4.0 - O MODELO MAIS ESTÁVEL E ATUALIZADO
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
                     response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            instances: [{ prompt: `Professional ${style} of: ${promptValue}` }],
+                            instances: [{ prompt: `Professional ${style} of: ${promptVal}. High quality, detailed.` }],
                             parameters: { sampleCount: 1 }
-                        }),
-                        credentials: 'omit'
+                        })
                     });
                 } else {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
                     response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{
                                 parts: [
-                                    { text: `Edit this image: ${style}. ${promptValue}` },
+                                    { text: `Task: ${editAction}. Instructions: ${promptVal || 'Enhance details'}.` },
                                     { inlineData: { mimeType: "image/png", data: uploadB64.split(',')[1] } }
                                 ]
                             }],
                             generationConfig: { responseModalities: ['IMAGE'] }
-                        }),
-                        credentials: 'omit'
+                        })
                     });
                 }
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(`Erro API (${response.status}): ${err.error?.message || 'Falha desconhecida'}`);
+                    throw new Error(err.error?.message || "Erro na API");
                 }
 
                 const data = await response.json();
                 let b64 = mode === "create" ? data.predictions?.[0]?.bytesBase64Encoded : data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
 
                 if (b64) {
-                    document.getElementById('outputImg').src = `data:image/png;base64,${b64}`;
+                    const output = document.getElementById('outputImage');
+                    output.src = `data:image/png;base64,${b64}`;
                     document.getElementById('loader').classList.add('hidden');
-                    document.getElementById('result').classList.remove('hidden');
+                    document.getElementById('resultArea').classList.remove('hidden');
                     document.getElementById('downloadBtn').onclick = () => {
                         const link = document.createElement('a');
-                        link.href = document.getElementById('outputImg').src;
+                        link.href = output.src;
                         link.download = `nando-art-${Date.now()}.png`;
                         link.click();
                     };
@@ -316,12 +343,22 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert(`Erro: ${err.message}\n\nVerifique se o seu domínio está autorizado no Google Cloud.`);
+                alert("Erro: " + err.message + "\nVerifique se o seu domínio está autorizado no Google Cloud.");
                 document.getElementById('placeholder').classList.remove('hidden');
                 document.getElementById('loader').classList.add('hidden');
             } finally {
-                btn.disabled = false;
+                genBtn.disabled = false;
             }
+        }
+
+        genBtn.onclick = process;
+        document.getElementById('editThisBtn').onclick = () => {
+            uploadB64 = document.getElementById('outputImage').src;
+            document.getElementById('uploadPreview').src = uploadB64;
+            document.getElementById('previewContainer').classList.remove('hidden');
+            document.getElementById('dropZone').classList.add('hidden');
+            document.getElementById('btnEditMode').click();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
     </script>
 </body>
